@@ -22,7 +22,7 @@ You can run the agent on your local machine to analyze the current repository. T
    gemini login
    ```
 
-   This will authenticate your session and set up the necessary environment for the CLI.
+   This will authenticate your session and set up the necessary environment for the CLI. No manual JSON configuration is required for basic usage.
 3. **Execution**:
    Use the desired command from the `.github/commands/` folder. For example, for a review:
 
@@ -37,10 +37,17 @@ For continuous operation in the repository, GitHub Actions with your own server 
 1. **Runner Setup**:
    - Install and start a GitHub Actions Runner on your server.
    - Ensure the runner has the `self-hosted` tag (as specified in the `.yml` files).
-2. **Secrets and Variables (Settings -> Secrets and variables -> Actions)**:
-   - `APP_ID`: Your GitHub App ID (for authorization).
+
+2. **Secrets and Variables (Optional)**:
+   By default, the workflows use the standard `GITHUB_TOKEN` provided by GitHub Actions. However, for a more professional setup, you can configure a GitHub App:
+   - `APP_ID`: Your GitHub App ID.
    - `APP_PRIVATE_KEY`: Your application's Private Key.
-   - These are used in `yolo-dispatch.yml` to generate access tokens.
+
+   **Why use a GitHub App?**
+   - **Identity**: The agent will post as your App (bot) instead of a generic "github-actions" user.
+   - **Rate Limits**: Apps have significantly higher rate limits than the default token.
+   - **Persistence**: Workflows will use these secrets automatically via `yolo-dispatch.yml` if they are present.
+
 3. **Activation**:
    - Place the files from `.github/workflows/` into your repository.
    - The main dispatcher (`yolo-dispatch.yml`) will automatically trigger on events (PR opens, comments) and delegate tasks to the appropriate workflows.
