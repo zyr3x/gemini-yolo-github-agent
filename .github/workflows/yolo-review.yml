@@ -1,0 +1,125 @@
+name: '🔎 YOLO Gemini Review'
+
+on:
+  workflow_call:
+    inputs:
+      additional_context:
+        type: 'string'
+        description: 'Any additional context from the request'
+        required: false
+
+concurrency:
+  group: '${{ github.workflow }}-review-${{ github.event_name }}-${{ github.event.pull_request.number || github.event.issue.number }}'
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: 'bash'
+
+jobs:
+  review:
+    runs-on: ["self-hosted"]
+    timeout-minutes: 7
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+      issues: 'write'
+      pull-requests: 'write'
+    steps:
+      - name: 'Mint identity token'
+        id: 'mint_identity_token'
+        if: |-
+          ${{ vars.APP_ID }}
+        uses: 'actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf' # ratchet:actions/create-github-app-token@v2
+        with:
+          app-id: '${{ vars.APP_ID }}'
+          private-key: '${{ secrets.APP_PRIVATE_KEY }}'
+          permission-contents: 'read'
+          permission-issues: 'write'
+          permission-pull-requests: 'write'
+
+      - name: 'Checkout repository'
+        uses: 'actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8' # ratchet:actions/checkout@v6
+
+
+      - name: 'Install GitHub MCP Server (Official)'
+        run: |
+          VERSION="v0.27.0"
+          OS="$(uname -s)"
+          ARCH="$(uname -m)"
+          echo "Installing github-mcp-server for $OS $ARCH"
+          
+          if [ "$OS" = "Linux" ]; then
+            if [ "$ARCH" = "x86_64" ]; then URL="https://github.com/github/github-mcp-server/releases/download/${VERSION}/github-mcp-server_Linux_x86_64.tar.gz"
+            else URL="https://github.com/github/github-mcp-server/releases/download/${VERSION}/github-mcp-server_Linux_arm64.tar.gz"; fi
+            curl -sL "$URL" | tar -xz github-mcp-server
+          elif [ "$OS" = "Darwin" ]; then
+            if [ "$ARCH" = "x86_64" ]; then URL="https://github.com/github/github-mcp-server/releases/download/${VERSION}/github-mcp-server_Darwin_x86_64.tar.gz"
+            else URL="https://github.com/github/github-mcp-server/releases/download/${VERSION}/github-mcp-server_Darwin_arm64.tar.gz"; fi
+            curl -sL "$URL" | tar -xz github-mcp-server
+          else
+             curl -sL -o mcp.zip "https://github.com/github/github-mcp-server/releases/download/${VERSION}/github-mcp-server_Windows_x86_64.zip"
+             unzip -o mcp.zip github-mcp-server.exe
+             mv github-mcp-server.exe github-mcp-server
+          fi
+          
+          chmod +x github-mcp-server
+          echo "${GITHUB_WORKSPACE}" >> $GITHUB_PATH
+
+      - name: 'Create Gemini Settings'
+        env:
+          GITHUB_TOKEN: '${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}'
+        run: |
+          mkdir -p ~/.gemini && cat << EOF > ~/.gemini/settings.json
+            {
+              "security": {
+                "auth": {
+                  "selectedType": "oauth-personal"
+                }
+              },
+              "model": {
+                "maxSessionTurns": 25
+              },
+              "telemetry": {
+                "enabled": true,
+                "target": "local",
+                "outfile": "gemini-telemetry.log"
+              },
+              "mcpServers": {
+                "github": {
+                  "command": "github-mcp-server",
+                  "args": ["stdio"],
+                  "env": {
+                    "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_TOKEN}"
+                  },
+                  "includeTools": [
+                    "add_comment_to_pending_review",
+                    "pull_request_read",
+                    "pull_request_review_write"
+                  ]
+                }
+              },
+              "tools": {
+                "core": [
+                  "read_file",
+                  "run_shell_command(cat)",
+                  "run_shell_command(echo)",
+                  "run_shell_command(grep)",
+                  "run_shell_command(head)",
+                  "run_shell_command(tail)"
+                ]
+              }
+            }
+          EOF
+
+      - name: 'Run Local Gemini CLI'
+        id: 'gemini_pr_review'
+        env:
+          GITHUB_TOKEN: '${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}'
+          ISSUE_TITLE: '${{ github.event.pull_request.title || github.event.issue.title }}'
+          ISSUE_BODY: '${{ github.event.pull_request.body || github.event.issue.body }}'
+          PULL_REQUEST_NUMBER: '${{ github.event.pull_request.number || github.event.issue.number }}'
+          REPOSITORY: '${{ github.repository }}'
+          ADDITIONAL_CONTEXT: '${{ inputs.additional_context }}'
+        run: |
+          gemini --yolo --prompt "$(cat .github/commands/yolo-review.md)"
