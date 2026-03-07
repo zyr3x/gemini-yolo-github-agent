@@ -1,4 +1,3 @@
-/Users/zyr3x/Development/projects/gemini-yolo-github-agent/README.md
 # 🦾 Gemini YOLO GitHub Agent
 
 An autonomous AI agent powered by Google Gemini, designed to automate GitHub workflows: from code reviews to issue triage.
