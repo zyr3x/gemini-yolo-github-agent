@@ -1,3 +1,4 @@
+/Users/zyr3x/Development/projects/gemini-yolo-github-agent/README.md
 # 🦾 Gemini YOLO GitHub Agent
 
 An autonomous AI agent powered by Google Gemini, designed to automate GitHub workflows: from code reviews to issue triage.
@@ -15,42 +16,44 @@ An autonomous AI agent powered by Google Gemini, designed to automate GitHub wor
 
 You can run the agent on your local machine to analyze the current repository. The CLI handles most of the configuration automatically.
 
-1. **Environment Setup**: Ensure you have the `gemini` CLI installed.
-2. **Authentication**: Simply run:
+1.  **Environment Setup**: Ensure you have the `gemini` CLI installed.
+    *   **Useful Link**: [Gemini CLI Documentation](https://geminicli.com/)
+2.  **Authentication**: Simply run:
 
-   ```bash
-   gemini login
-   ```
+    ```bash
+    gemini login
+    ```
 
-   This will authenticate your session and set up the necessary environment for the CLI. No manual JSON configuration is required for basic usage.
-3. **Execution**:
-   Use the desired command from the `.github/commands/` folder. For example, for a review:
+    This will authenticate your session and set up the necessary environment for the CLI. No manual JSON configuration is required for basic usage.
+3.  **Execution**:
+    Use the desired command from the `.github/commands/` folder. For example, for a review:
 
-   ```bash
-   gemini --yolo --prompt "$(cat .github/commands/yolo-review.md)"
-   ```
+    ```bash
+    gemini --yolo --prompt "$(cat .github/commands/yolo-review.md)"
+    ```
 
 ### 2. Server / Self-hosted Version (GitHub Actions)
 
 For continuous operation in the repository, GitHub Actions with your own server (self-hosted runner) are used.
 
-1. **Runner Setup**:
-   - Install and start a GitHub Actions Runner on your server.
-   - Ensure the runner has the `self-hosted` tag (as specified in the `.yml` files).
+1.  **Runner Setup**:
+    *   Install and start a GitHub Actions Runner on your server.
+    *   Ensure the runner has the `self-hosted` tag (as specified in the `.yml` files).
+    *   **Useful Link**: [About self-hosted runners - GitHub Docs](https://docs.github.com/en/actions/hosting-your-own-runners/about-self-hosted-runners)
 
-2. **Secrets and Variables (Optional)**:
-   By default, the workflows use the standard `GITHUB_TOKEN` provided by GitHub Actions. However, for a more professional setup, you can configure a GitHub App:
-   - `APP_ID`: Your GitHub App ID.
-   - `APP_PRIVATE_KEY`: Your application's Private Key.
+2.  **Secrets and Variables (Optional)**:
+    By default, the workflows use the standard `GITHUB_TOKEN` provided by GitHub Actions. However, for a more professional setup, you can configure a GitHub App:
+    - `APP_ID`: Your GitHub App ID.
+    - `APP_PRIVATE_KEY`: Your application's Private Key.
 
-   **Why use a GitHub App?**
-   - **Identity**: The agent will post as your App (bot) instead of a generic "github-actions" user.
-   - **Rate Limits**: Apps have significantly higher rate limits than the default token.
-   - **Persistence**: Workflows will use these secrets automatically via `yolo-dispatch.yml` if they are present.
+    **Why use a GitHub App?**
+    - **Identity**: The agent will post as your App (bot) instead of a generic "github-actions" user.
+    - **Rate Limits**: Apps have significantly higher rate limits than the default token.
+    - **Persistence**: Workflows will use these secrets automatically via `yolo-dispatch.yml` if they are present.
 
-3. **Activation**:
-   - Place the files from `.github/workflows/` into your repository.
-   - The main dispatcher (`yolo-dispatch.yml`) will automatically trigger on events (PR opens, comments) and delegate tasks to the appropriate workflows.
+3.  **Activation**:
+    - Place the files from `.github/workflows/` into your repository.
+    - The main dispatcher (`yolo-dispatch.yml`) will automatically trigger on events (PR opens, comments) and delegate tasks to the appropriate workflows.
 
 ## 🚀 How to Use
 
