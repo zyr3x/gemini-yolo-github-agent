@@ -18,7 +18,7 @@ defaults:
 
 jobs:
   invoke:
-    runs-on: ["self-hosted"]
+    runs-on: ["self-hosted", "WIN"]
     permissions:
       contents: 'read'
       id-token: 'write'
@@ -129,6 +129,9 @@ jobs:
           IS_PULL_REQUEST: '${{ !!github.event.pull_request }}'
           ISSUE_NUMBER: '${{ github.event.pull_request.number || github.event.issue.number }}'
           REPOSITORY: '${{ github.repository }}'
+          REPO_OWNER: '${{ github.repository_owner }}'
+          REPO_NAME: '${{ github.event.repository.name }}'
           ADDITIONAL_CONTEXT: '${{ inputs.additional_context }}'
         run: |
-          gemini --yolo --prompt "$(cat .github/commands/yolo-invoke.md)"
+          envsubst '$TITLE $DESCRIPTION $EVENT_NAME $IS_PULL_REQUEST $ISSUE_NUMBER $REPOSITORY $REPO_OWNER $REPO_NAME $ADDITIONAL_CONTEXT' < .github/commands/yolo-invoke.md > yolo_prompt.md
+          gemini --yolo --prompt "$(cat yolo_prompt.md)"

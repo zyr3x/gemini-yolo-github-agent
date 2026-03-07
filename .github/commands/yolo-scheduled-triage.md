@@ -25,18 +25,21 @@ These are non-negotiable operational rules. Failure to comply will result in tas
 The following data is provided for your analysis:
 
 **Available Labels** (single, comma-separated string of all available label names):
+
 ```
-!{echo $AVAILABLE_LABELS}
+$AVAILABLE_LABELS
 ```
 
 **Issues to Triage** (JSON array where each object has `"number"`, `"title"`, and `"body"` keys):
+
 ```
-!{echo $ISSUES_TO_TRIAGE}
+$ISSUES_TO_TRIAGE
 ```
 
 **Output File Path** where your final JSON output must be written:
+
 ```
-!{echo  $GITHUB_ENV}
+$GITHUB_ENV
 ```
 
 ## Execution Workflow
@@ -46,6 +49,7 @@ Follow this five-step process sequentially:
 ### Step 1: Parse Input Data
 
 Parse the provided data above:
+
 - Split the available labels by comma to get the list of valid labels.
 - Parse the JSON array of issues to analyze.
 - Note the output file path where you will write your results.
@@ -55,10 +59,10 @@ Parse the provided data above:
 Before reviewing the issues, create an internal map of the semantic purpose of each available label based on its name. For each label, define both its positive meaning and, if applicable, its exclusionary criteria.
 
 **Example Semantic Map:**
-*   `kind/bug`: An error, flaw, or unexpected behavior in existing code. *Excludes feature requests.*
-*   `kind/enhancement`: A request for a new feature or improvement to existing functionality. *Excludes bug reports.*
-*   `priority/p1`: A critical issue requiring immediate attention, such as a security vulnerability, data loss, or a production outage.
-*   `good first issue`: A task suitable for a newcomer, with a clear and limited scope.
+- `kind/bug`: An error, flaw, or unexpected behavior in existing code. *Excludes feature requests.*
+- `kind/enhancement`: A request for a new feature or improvement to existing functionality. *Excludes bug reports.*
+- `priority/p1`: A critical issue requiring immediate attention, such as a security vulnerability, data loss, or a production outage.
+- `good first issue`: A task suitable for a newcomer, with a clear and limited scope.
 
 This semantic map will serve as your primary classification criteria.
 
@@ -66,20 +70,20 @@ This semantic map will serve as your primary classification criteria.
 
 Based on your semantic map, establish a set of general principles to guide your decisions in ambiguous cases. These principles should include:
 
-*   **Precision over Coverage:** It is better to apply no label than an incorrect one. When in doubt, leave it out.
-*   **Focus on Relevance:** Aim for high signal-to-noise. In most cases, 1-3 labels are sufficient to accurately categorize an issue. This reinforces the principle of precision over coverage.
-*   **Heuristics for Priority:** If priority labels (e.g., `priority/p0`, `priority/p1`) exist, map them to specific keywords. For example, terms like "security," "vulnerability," "data loss," "crash," or "outage" suggest a high priority. A lack of such terms suggests a lower priority.
-*   **Distinguishing `bug` vs. `enhancement`:** If an issue describes behavior that contradicts current documentation, it is likely a `bug`. If it proposes new functionality or a change to existing, working-as-intended behavior, it is an `enhancement`.
-*   **Assessing Issue Quality:** If an issue's title and body are extremely sparse or unclear, making a confident classification impossible, it should be excluded from the output.
+- **Precision over Coverage:** It is better to apply no label than an incorrect one. When in doubt, leave it out.
+- **Focus on Relevance:** Aim for high signal-to-noise. In most cases, 1-3 labels are sufficient to accurately categorize an issue. This reinforces the principle of precision over coverage.
+- **Heuristics for Priority:** If priority labels (e.g., `priority/p0`, `priority/p1`) exist, map them to specific keywords. For example, terms like "security," "vulnerability," "data loss," "crash," or "outage" suggest a high priority. A lack of such terms suggests a lower priority.
+- **Distinguishing `bug` vs. `enhancement`:** If an issue describes behavior that contradicts current documentation, it is likely a `bug`. If it proposes new functionality or a change to existing, working-as-intended behavior, it is an `enhancement`.
+- **Assessing Issue Quality:** If an issue's title and body are extremely sparse or unclear, making a confident classification impossible, it should be excluded from the output.
 
 ### Step 4: Triage Issues
 
 Iterate through each issue object. For each issue:
 
-1.  Analyze its `title` and `body` to understand its core intent, context, and urgency.
-2.  Compare the issue's intent against the semantic map and the general principles you established.
-3.  Select the set of one or more labels that most accurately and confidently describe the issue.
-4.  If no available labels are a clear and confident match, or if the issue quality is too low for analysis, **exclude that issue from the final output.**
+1. Analyze its `title` and `body` to understand its core intent, context, and urgency.
+2. Compare the issue's intent against the semantic map and the general principles you established.
+3. Select the set of one or more labels that most accurately and confidently describe the issue.
+4. If no available labels are a clear and confident match, or if the issue quality is too low for analysis, **exclude that issue from the final output.**
 
 ### Step 5: Construct and Write Output
 
@@ -91,9 +95,9 @@ Assemble the results into a single JSON array, formatted as a string, according 
 
 The output **MUST** be a JSON array of objects. Each object represents a triaged issue and **MUST** contain the following three keys:
 
-*   `issue_number` (Integer): The issue's unique identifier.
-*   `labels_to_set` (Array of Strings): The list of labels to be applied.
-*   `explanation` (String): A brief (1-2 sentence) justification for the chosen labels, **citing specific evidence or keywords from the issue's title or body.**
+- `issue_number` (Integer): The issue's unique identifier.
+- `labels_to_set` (Array of Strings): The list of labels to be applied.
+- `explanation` (String): A brief (1-2 sentence) justification for the chosen labels, **citing specific evidence or keywords from the issue's title or body.**
 
 **Example Output JSON:**
 

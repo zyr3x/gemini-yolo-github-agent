@@ -18,7 +18,7 @@ defaults:
 
 jobs:
   triage:
-    runs-on: ["self-hosted"]
+    runs-on: ["self-hosted", "WIN"]
     timeout-minutes: 7
     outputs:
       available_labels: '${{ steps.get_labels.outputs.available_labels }}'
@@ -115,7 +115,8 @@ jobs:
           ISSUE_BODY: '${{ github.event.issue.body }}'
           AVAILABLE_LABELS: '${{ steps.get_labels.outputs.available_labels }}'
         run: |
-          gemini --yolo --prompt "$(cat .github/commands/yolo-triage.md)"
+          envsubst '$ISSUE_TITLE $ISSUE_BODY $AVAILABLE_LABELS $GITHUB_ENV' < .github/commands/yolo-triage.md > yolo_prompt.md
+          gemini --yolo --prompt "$(cat yolo_prompt.md)"
 
       - name: 'Mint identity token'
         id: 'mint_identity_token'

@@ -18,7 +18,7 @@ defaults:
 
 jobs:
   review:
-    runs-on: ["self-hosted"]
+    runs-on: ["self-hosted", "WIN"]
     timeout-minutes: 7
     permissions:
       contents: 'read'
@@ -120,6 +120,9 @@ jobs:
           ISSUE_BODY: '${{ github.event.pull_request.body || github.event.issue.body }}'
           PULL_REQUEST_NUMBER: '${{ github.event.pull_request.number || github.event.issue.number }}'
           REPOSITORY: '${{ github.repository }}'
+          REPO_OWNER: '${{ github.repository_owner }}'
+          REPO_NAME: '${{ github.event.repository.name }}'
           ADDITIONAL_CONTEXT: '${{ inputs.additional_context }}'
         run: |
-          gemini --yolo --prompt "$(cat .github/commands/yolo-review.md)"
+          envsubst '$ISSUE_TITLE $ISSUE_BODY $PULL_REQUEST_NUMBER $REPOSITORY $REPO_OWNER $REPO_NAME $ADDITIONAL_CONTEXT' < .github/commands/yolo-review.md > yolo_prompt.md
+          gemini --yolo --prompt "$(cat yolo_prompt.md)"
