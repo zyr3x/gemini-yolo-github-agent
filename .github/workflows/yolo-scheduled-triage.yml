@@ -66,25 +66,42 @@ jobs:
 
       - name: 'Find untriaged issues'
         id: 'find_issues'
-        env:
-          GITHUB_REPOSITORY: '${{ github.repository }}'
-          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN || github.token }}'
-        run: |-
-          echo '🔍 Finding unlabeled issues and issues marked for triage...'
-          ISSUES="$(gh issue list \
-            --state 'open' \
-            --search 'no:label label:"status/needs-triage"' \
-            --json number,title,body \
-            --limit '100' \
-            --repo "${GITHUB_REPOSITORY}"
-          )"
+        uses: 'actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd' # ratchet:actions/github-script@v8.0.0
+        with:
+          script: |-
+            core.info('🔍 Finding unlabeled issues and issues marked for triage...');
+            const q1 = `repo:${context.repo.owner}/${context.repo.repo} is:issue is:open no:label`;
+            const r1 = await github.rest.search.issuesAndPullRequests({ q: q1, per_page: 50 });
+            
+            const q2 = `repo:${context.repo.owner}/${context.repo.repo} is:issue is:open label:"status/needs-triage"`;
+            const r2 = await github.rest.search.issuesAndPullRequests({ q: q2, per_page: 50 });
+            
+            const issuesMap = new Map();
+            [...r1.data.items, ...r2.data.items].forEach(item => {
+              issuesMap.set(item.number, {
+                number: item.number,
+                title: item.title,
+                body: item.body
+              });
+            });
+            
+            const issues = Array.from(issuesMap.values());
+            core.setOutput('issues_to_triage', JSON.stringify(issues));
+            core.info(`✅ Found ${issues.length} issue(s) to triage! 🎯`);
+      - name: 'Checkout repository'
+        uses: 'actions/checkout@v4' # ratchet:exclude
 
-          echo '📝 Setting output for GitHub Actions...'
-          echo "issues_to_triage=${ISSUES}" >> "${GITHUB_OUTPUT}"
-
-          ISSUE_COUNT="$(echo "${ISSUES}" | jq 'length')"
-          echo "✅ Found ${ISSUE_COUNT} issue(s) to triage! 🎯"
-
+      - name: 'Mint identity token'
+        id: 'mint_identity_token'
+        if: |-
+          ${{ vars.APP_ID }}
+        uses: 'actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf' # ratchet:actions/create-github-app-token@v2
+        with:
+          app-id: '${{ vars.APP_ID }}'
+          private-key: '${{ secrets.APP_PRIVATE_KEY }}'
+          permission-contents: 'read'
+          permission-issues: 'write'
+          permission-pull-requests: 'write'
 
       - name: 'Install GitHub MCP Server (Official)'
         run: |
@@ -150,22 +167,11 @@ jobs:
           envsubst '$AVAILABLE_LABELS $ISSUES_TO_TRIAGE $GITHUB_ENV' < .github/commands/yolo-scheduled-triage.md > yolo_prompt.md
           gemini --yolo --prompt "$(cat yolo_prompt.md)"
 
-      - name: 'Mint identity token'
-        id: 'mint_identity_token'
-        if: |-
-          ${{ vars.APP_ID }}
-        uses: 'actions/create-github-app-token@29824e69f54612133e76f7eaac726eef6c875baf' # ratchet:actions/create-github-app-token@v2
-        with:
-          app-id: '${{ vars.APP_ID }}'
-          private-key: '${{ secrets.APP_PRIVATE_KEY }}'
-          permission-contents: 'read'
-          permission-issues: 'write'
-          permission-pull-requests: 'write'
 
       - name: 'Apply labels'
         env:
-          AVAILABLE_LABELS: '${{ needs.triage.outputs.available_labels }}'
-          TRIAGED_ISSUES: '${{ needs.triage.outputs.triaged_issues }}'
+          AVAILABLE_LABELS: '${{ steps.get_labels.outputs.available_labels }}'
+          TRIAGED_ISSUES: '${{ env.TRIAGED_ISSUES }}'
         uses: 'actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd' # ratchet:actions/github-script@v8.0.0
         with:
           # Use the provided token so that the "yolo-cli" is the actor in the

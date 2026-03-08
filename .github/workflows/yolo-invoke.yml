@@ -94,6 +94,7 @@ jobs:
                   "includeTools": [
                     "add_issue_comment",
                     "issue_read",
+                    "list_issue_comments",
                     "list_issues",
                     "search_issues",
                     "pull_request_read",
@@ -129,4 +130,26 @@ jobs:
           ADDITIONAL_CONTEXT: '${{ inputs.additional_context }}'
         run: |
           envsubst '$TITLE $DESCRIPTION $EVENT_NAME $IS_PULL_REQUEST $ISSUE_NUMBER $REPOSITORY $REPO_OWNER $REPO_NAME $ADDITIONAL_CONTEXT' < .github/commands/yolo-invoke.md > yolo_prompt.md
-          gemini --yolo --prompt "$(cat yolo_prompt.md)"
+          
+          set +e
+          gemini --yolo --prompt "$(cat yolo_prompt.md)" > gemini_output.log 2>&1
+          EXIT_CODE=$?
+          set -e
+          
+          cat gemini_output.log
+          
+          # Check if Gemini successfully posted a comment via MCP.
+          # We check multiple patterns because the log format may vary between CLI versions.
+          if grep -qE "(github__add_issue_comment|add_issue_comment|\"tool\":\s*\"add_issue_comment\")" gemini_output.log; then
+            echo "Model successfully used the comment tool."
+          elif grep -q "## 🤖 AI Assistant: Plan of Action" gemini_output.log; then
+            echo "Model failed to use the comment tool. Falling back to stdout extraction..."
+            awk '/## 🤖 AI Assistant: Plan of Action/{flag=1} flag' gemini_output.log > final_plan.md
+            PLAN_BODY=$(cat final_plan.md | jq -Rs .)
+            curl -s -X POST -H "Authorization: token ${GITHUB_TOKEN}" \
+              -H "Accept: application/vnd.github.v3+json" \
+              "https://api.github.com/repos/${REPOSITORY}/issues/${ISSUE_NUMBER}/comments" \
+              -d "{\"body\": ${PLAN_BODY}}"
+          fi
+          
+          exit $EXIT_CODE
