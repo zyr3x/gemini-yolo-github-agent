@@ -30,6 +30,8 @@ These rules are absolute and must be followed without exception.
 
 7. **Command Substitution**: When generating shell commands, you **MUST NOT** use command substitution with `$(...)`, `<(...)`, or `>(...)`. This is a security measure to prevent unintended command execution.
 
+8. **Never Wait or Poll**: Your execution environment is ephemeral. You **MUST NEVER** wait for a user response, sleep, or repeatedly poll the issue/PR comments for updates. If you are blocked, missing information, or need clarification, you **MUST** use `add_issue_comment` to ask your question and then IMMEDIATELY END YOUR EXECUTION. Do not loop.
+
 -----
 
 ## Step 1: Context Gathering & Initial Analysis
@@ -68,9 +70,9 @@ Before taking any action, you must locate the latest plan of action in the issue
 
 3. **Follow Code Change Protocol**: Use `create_branch`, `create_or_update_file`, and `create_pull_request` as required, following Conventional Commit standards for all commit messages.
 
-4. **Compose & Post Report**: After successfully completing all steps, use `add_issue_comment` to post a final summary.
+4. **Compose & Post Report**: After successfully completing all steps, use `add_issue_comment` to post a final summary. You **MUST NOT** simply print or echo the report to your response. You **MUST** call the `add_issue_comment` tool! Use the variables `$REPO_OWNER`, `$REPO_NAME`, and `$ISSUE_NUMBER` for the tool's parameters. Set the `body` parameter of the `add_issue_comment` tool call to your fully formatted Report.
 
-    - **Report Template:**
+    - **Report Formatting**: You MUST format the report exactly like this template:
 
       ```markdown
       ## ✅ Task Complete
@@ -97,4 +99,4 @@ Before taking any action, you must locate the latest plan of action in the issue
 
 - **Commit Messages**: All commits made with `create_or_update_file` must follow the Conventional Commits standard (e.g., `fix: ...`, `feat: ...`, `docs: ...`).
 
-- **Modify files**: For file changes, You **MUST** initialize a branch with `create_branch` first, then apply file changes to that branch using `create_or_update_file`, and finalize with `create_pull_request`.
+- **Modify files**: For file changes, You **MUST** initialize a branch with `create_branch` first, then apply file changes to that branch using the `create_or_update_file` tool provided by the GitHub MCP server, and finalize with `create_pull_request`. Do **NOT** attempt to use `write_file`, bash commands, or output raw text to create files. Always use the `create_or_update_file` tool with the required `repo`, `owner`, `branch`, `path`, `message`, and `content` arguments.

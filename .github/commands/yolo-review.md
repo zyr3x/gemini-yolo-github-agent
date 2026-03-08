@@ -125,11 +125,13 @@ Apply these severities consistently:
 
 - Comments in markdown (.md) files: `🟢` (Low) or `🟡` (Medium).
 
-### Step 3: Submit the Review on GitHub
+### Step 3: Submit the Review on GitHub (CRITICAL)
 
-1. **Create Pending Review:** Call `create_pending_pull_request_review`. Ignore errors like "can only have one pending review per pull request" and proceed to the next step.
+You **MUST NOT** simply print or echo your review as regular text in your response. You **MUST** use the following specific tools to post the review to GitHub:
 
-2. **Add Comments and Suggestions:** For each formulated review comment, call `add_comment_to_pending_review`.
+1. **Create Pending Review:** Call the `create_pending_pull_request_review` tool. Ignore errors like "can only have one pending review per pull request" and proceed to the next step.
+
+2. **Add Comments and Suggestions:** For each formulated review comment, call the `add_comment_to_pending_review` tool.
 
     2a. When there is a code suggestion (preferred), structure the comment payload using this exact template:
 

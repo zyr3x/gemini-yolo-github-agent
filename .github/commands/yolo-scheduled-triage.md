@@ -59,6 +59,7 @@ Parse the provided data above:
 Before reviewing the issues, create an internal map of the semantic purpose of each available label based on its name. For each label, define both its positive meaning and, if applicable, its exclusionary criteria.
 
 **Example Semantic Map:**
+
 - `kind/bug`: An error, flaw, or unexpected behavior in existing code. *Excludes feature requests.*
 - `kind/enhancement`: A request for a new feature or improvement to existing functionality. *Excludes bug reports.*
 - `priority/p1`: A critical issue requiring immediate attention, such as a security vulnerability, data loss, or a production outage.
@@ -87,9 +88,9 @@ Iterate through each issue object. For each issue:
 
 ### Step 5: Construct and Write Output
 
-Assemble the results into a single JSON array, formatted as a string, according to the **Output Specification** below. Finally, execute the command to write this string to the output file, ensuring the JSON is enclosed in single quotes to prevent shell interpretation.
+Assemble the results into a single JSON array, formatted as a string, according to the **Output Specification** below. Finally, execute the command to write this string to the output file, ensuring the JSON is enclosed in single quotes to prevent shell interpretation. You **MUST NOT** simply print or echo the JSON array as regular text in your response. You **MUST** call the `run_shell_command(echo)` tool!
 
-- Use the shell command to write: `echo 'TRIAGED_ISSUES=...' > "$GITHUB_ENV"` (Replace `...` with the final, minified JSON array string).
+- Use the shell command to write: `echo 'TRIAGED_ISSUES=...' >> "$GITHUB_ENV"` (Replace `...` with the final, minified JSON array string).
 
 ## Output Specification
 

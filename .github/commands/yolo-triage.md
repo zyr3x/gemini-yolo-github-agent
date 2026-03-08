@@ -42,9 +42,9 @@ $GITHUB_ENV
 
 3. Convert the list of appropriate labels into a comma-separated list (CSV). If there are no appropriate labels, use the empty string.
 
-4. Use the "echo" shell command to append the CSV labels to the output file path provided above:
+4. You **MUST NOT** simply print or echo your response as regular text. You **MUST** call the `run_shell_command(echo)` tool to append the CSV labels to the output file path provided above:
 
-    ```
+    ```bash
     echo "SELECTED_LABELS=[APPROPRIATE_LABELS_AS_CSV]" >> "[filepath_for_env]"
     ```
 

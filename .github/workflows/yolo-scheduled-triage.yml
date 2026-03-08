@@ -32,8 +32,8 @@ jobs:
     permissions:
       contents: 'read'
       id-token: 'write'
-      issues: 'read'
-      pull-requests: 'read'
+      issues: 'write'
+      pull-requests: 'write'
     outputs:
       available_labels: '${{ steps.get_labels.outputs.available_labels }}'
       triaged_issues: '${{ env.TRIAGED_ISSUES }}'
@@ -178,7 +178,7 @@ jobs:
               .sort()
 
             // Parse out the triaged issues
-            const triagedIssues = (JSON.parse(process.env.TRIAGED_ISSUES || '{}'))
+            const triagedIssues = (JSON.parse(process.env.TRIAGED_ISSUES || '[]'))
               .sort((a, b) => a.issue_number - b.issue_number)
 
             core.debug(`Triaged issues: ${JSON.stringify(triagedIssues)}`);
