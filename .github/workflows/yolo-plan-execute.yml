@@ -144,20 +144,4 @@ jobs:
           EXIT_CODE=$?
           set -e
           
-          cat gemini_output.log
-          
-          # Check if Gemini successfully posted a comment via MCP.
-          # We check multiple patterns because the log format may vary between CLI versions.
-          if grep -qE "(github__add_issue_comment|add_issue_comment|\"tool\":\s*\"add_issue_comment\")" gemini_output.log; then
-            echo "Model successfully used the comment tool."
-          elif grep -q "## ✅ Task Complete" gemini_output.log; then
-            echo "Model failed to use the comment tool. Falling back to stdout extraction..."
-            awk '/## ✅ Task Complete/{flag=1} flag' gemini_output.log > final_plan.md
-            PLAN_BODY=$(cat final_plan.md | jq -Rs .)
-            curl -s -X POST -H "Authorization: token ${GITHUB_TOKEN}" \
-              -H "Accept: application/vnd.github.v3+json" \
-              "https://api.github.com/repos/${REPOSITORY}/issues/${ISSUE_NUMBER}/comments" \
-              -d "{\"body\": ${PLAN_BODY}}"
-          fi
-          
           exit $EXIT_CODE
