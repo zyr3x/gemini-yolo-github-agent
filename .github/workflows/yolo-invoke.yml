@@ -135,5 +135,5 @@ jobs:
           gemini --yolo --prompt "$(cat yolo_prompt.md)" > gemini_output.log 2>&1
           EXIT_CODE=$?
           set -e
-          
+          cat gemini_output.log
           exit $EXIT_CODE
